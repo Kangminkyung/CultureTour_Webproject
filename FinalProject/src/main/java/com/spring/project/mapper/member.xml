@@ -1,0 +1,113 @@
+<!-- ==== #26. mapper 기본설정 ==== -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+<!-- ==== #27. 루트 엘리먼트 & 네임스페이스 설정(프로젝트 전체내에서 유일해야 한다.) -->
+<mapper namespace="member">
+
+	 <select id="getLoginMember" parameterType="HashMap" resultType="com.spring.project.member.model.MemberVO">
+		select idx,userid,name,pwd,email,hp1,hp2,hp3,post,addr1,addr2,to_char(registerday,'yyyy-mm-dd') as registerday,
+		       status,point,quiz,quizgrade from final_member 
+			   where status = 1 and userid = #{userid} and pwd = #{pwd}
+	</select>
+	
+	
+	<select id="gettotalmember" parameterType="HashMap" resultType="Integer">
+		select count(*) as cnt
+		from final_member
+		WHERE ${searchType}  LIKE '%'  || #{searchName}  || '%'  
+	</select>
+	
+	<select id="getmemberlist" parameterType="HashMap" resultType="com.spring.project.member.model.MemberVO">
+		select rno ,  idx,userid,name,pwd,email,hp1,hp2,hp3,post,addr1,registerday,status,point,quiz,quizgrade,addr2
+				from 
+				(
+				select rownum AS RNO, idx,userid,name,pwd,email,hp1,hp2,hp3,post,addr1,registerday,status,point,quiz,quizgrade,addr2
+				from 
+				(
+				select idx,userid,name,pwd,email,hp1,hp2,hp3,post,addr1,registerday,status,point,quiz,quizgrade,addr2
+				from final_member
+	      WHERE ${searchType}  LIKE '%'  || #{searchName}  || '%'  
+				)V
+				)T 
+		  WHERE status = 1  and  RNO BETWEEN #{startRno} AND #{endRno}
+	</select>
+	
+	
+	
+	<insert id="registerMember" parameterType="com.spring.project.member.model.MemberVO">
+		insert into final_member(idx,    userid , name,     pwd,          email,    hp1,      hp2,    hp3,    post    ,addr1, registerday , status, point, quiz, quizGrade, addr2) 
+		values(seq_final_member.nextval, #{userid}, #{name}, #{pwd}, #{email}, #{hp1}, #{hp2}, #{hp3}, #{post}, #{addr1}, default, default, default, default, default, #{addr2})
+	</insert>
+	
+	<select id="idDuplicateCheck" parameterType="String" resultType="Integer">
+		SELECT COUNT(*) AS CNT
+		FROM final_member
+		WHERE userid = #{userid}
+	</select>
+	
+	<select id="getUserid" parameterType="HashMap" resultType="String">
+		select userid
+		from final_member
+		where status = 1 and
+		name = #{name} and
+		trim(hp1) || trim(hp2) || trim(hp3) = #{mobile}
+	</select>
+	
+	<select id="isUserExists" parameterType="HashMap" resultType="Integer">
+		select count(*) AS CNT
+		from final_member
+		where status = 1 and
+		userid = #{userid} and
+		email = #{email}
+	</select>
+	
+	<select id="updatePwdUser" parameterType="HashMap" resultType="Integer">
+		update final_member set pwd = #{pwd}
+	 	where userid = #{userid}
+	</select>
+	
+	<update id="deleteMember" parameterType="String" >
+		update final_member set status = 0  
+		where idx = #{idx}
+	</update>
+
+
+	
+	<!-- 네이버 아이디 중복검사 -->
+	<select id="getNaverDuplicate" parameterType="HashMap" resultType="Integer">
+		select count(*) as cnt from final_member
+		where userid = #{userid} and pwd = #{pwd}
+	</select>
+	
+	<!-- 네이버 아이디로 회원가입 -->
+	<insert id="NaverRegisterMember" parameterType="com.spring.project.member.model.MemberVO">
+		insert into final_member(idx,userid,pwd,name,email) values(seq_final_member.nextval,#{userid},#{pwd},#{name},#{email})
+	</insert>
+	
+	
+		<update id="updateMember" parameterType="com.spring.project.member.model.MemberVO">
+		update final_member set name = #{name}, pwd = #{pwd}, email = #{email}, hp1 = #{hp1}, hp2 = #{hp2}, hp3 = #{hp3}, post = #{post}, addr1 = #{addr1}, addr2 = #{addr2}  		
+		where idx = #{idx} 
+	</update>
+	
+	<select id="getMemberOneByIdx" parameterType="HashMap" resultType="com.spring.project.member.model.MemberVO">
+		select idx, userid, name, pwd, email, hp1, hp2, hp3, post, addr1, addr2,
+		to_char(registerday, 'yyyy-mm-dd') as registerday
+		,status , point, quiz, quizGrade
+		from final_member
+		where idx = #{idx}
+	</select>
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+</mapper>

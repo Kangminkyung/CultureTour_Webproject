@@ -1,0 +1,215 @@
+<!-- ==== #26. mapper 기본설정 ==== -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+<!-- ==== #27. 루트 엘리먼트 & 네임스페이스 설정(프로젝트 전체내에서 유일해야 한다.) -->
+<mapper namespace="culture">
+
+	<select id="getCultureTotalCount" parameterType="HashMap" resultType="Integer">
+	    select count(*)
+		from final_culture
+		where ccbakdcd = #{ccbakdcd}
+	</select>
+	
+	<select id="getCulturePagingList" parameterType="HashMap" resultType="com.spring.project.culture.model.CultureVO">
+		
+		select idx, ccbakdcd, ccbactcd, ccbaasno, ccmaname, gcodename, mcodename,ccbalcad, cccename, imageurl, subimage1, subimage2, subimage3
+		from 
+		(
+		select rownum as RNO
+		     , V.idx, V.ccbakdcd, V.ccbactcd, V.ccbaasno, V.ccmaname, V.gcodename, V.mcodename, V.ccbalcad, V.cccename, V.imageurl, V.subimage1, V.subimage2, V.subimage3
+		from 
+		(
+		select idx, ccbakdcd, ccbactcd, ccbaasno, ccmaname, gcodename, mcodename,ccbalcad, cccename, imageurl, subimage1, subimage2, subimage3
+		from final_culture
+		where ccbakdcd = #{ccbakdcd}
+		order by idx asc
+		) V
+		) T
+		where T.RNO <![CDATA[>=]]> #{startRno} and T.RNO <![CDATA[<=]]> #{endRno}
+		
+	</select>
+	
+	<!-- 문화재 상세정보를 가져오는 xml -->
+	<select id="getCultureDetail" parameterType="String" resultType="com.spring.project.culture.model.CultureVO">
+		select idx, ccbakdcd, ccbactcd, ccbaasno, ccmaname, gcodename, mcodename,ccbalcad, cccename, imageurl,content ,subimage1, subimage2, subimage3
+		from final_culture where idx = #{idx}	
+	</select>
+	
+	<!-- 등급올리기 -->
+	<update id="updateGrade" parameterType="String">
+		update final_member set quizgrade = quizgrade+1 where userid = #{userid}
+	</update>
+	
+	<select id="getCultureSearchTotalCount" parameterType="HashMap" resultType="Integer">
+		select count(*)
+		from final_culture		
+		where ccmaname like '%'|| #{cultureSearchWord} ||'%'
+
+	</select>
+	
+	<!-- 문화재 검색 리스트 -->
+	<select id="getCultureSearch" parameterType="HashMap" resultType="com.spring.project.culture.model.CultureVO">
+		
+		select idx, ccbakdcd, ccbactcd, ccbaasno, ccmaname, gcodename, mcodename,ccbalcad, cccename, imageurl, subimage1, subimage2, subimage3
+		from 
+		(
+		select rownum as RNO
+		     , V.idx, V.ccbakdcd, V.ccbactcd, V.ccbaasno, V.ccmaname, V.gcodename, V.mcodename, V.ccbalcad, V.cccename, V.imageurl, V.subimage1, V.subimage2, V.subimage3
+		from 
+		(
+		select idx, ccbakdcd, ccbactcd, ccbaasno, ccmaname, gcodename, mcodename,ccbalcad, cccename, imageurl, subimage1, subimage2, subimage3
+		from final_culture
+		where ccmaname like '%'|| #{cultureSearchWord} ||'%'
+		order by idx asc
+		) V
+		) T
+		where T.RNO <![CDATA[>=]]> #{startRno} and T.RNO <![CDATA[<=]]> #{endRno}
+		
+	</select>
+
+	<update id="updatequiz" parameterType="String">
+		update final_member set quiz = 1
+		where userid = #{userid}
+	</update>
+	
+	 <select id="getLoginMember" parameterType="HashMap" resultType="com.spring.project.member.model.MemberVO">
+		select idx,userid,name,pwd,email,hp1,hp2,hp3,post,addr1,addr2,to_char(registerday,'yyyy-mm-dd') as registerday,
+		       status,point,quiz,quizgrade from final_member 
+			   where status = 1 and userid = #{userid} and pwd = #{pwd}
+	</select>
+	
+		<!-- 위시 문화재 추가 -->
+	<select id="addWishCulture" parameterType="HashMap">
+
+		insert into final_culture_wish(wishno,fk_userid,idx,status) values(seq_final_cultural_wish.nextval,#{userid},#{idx},1)
+		
+	</select>
+	
+	
+	<!-- 위시 문화재 중복검사 -->
+	<select id="CultureWishIdxCount" parameterType="HashMap" resultType="Integer">
+		select count(*)
+		from final_culture_wish
+		where idx = #{idx} and fk_userid = #{userid}
+	</select>
+	
+	<!-- 위시 총개수 -->
+	<select id="getCultureWishTotalCount" parameterType="HashMap" resultType="Integer">
+		select count(*)
+		from final_culture_wish
+		where fk_userid = #{userid}
+	</select>
+	
+	<resultMap type="HashMap" id="cultureListMap">
+		<result property="rno" column="rno" javaType="String" />
+		<result property="idx" column="idx" javaType="String" />
+		<result property="ccbakdcd" column="ccbakdcd" javaType="String" />
+		<result property="ccbactcd" column="ccbactcd" javaType="String" />
+		<result property="ccbaasno" column="ccbaasno" javaType="String" />
+		<result property="ccmaname" column="ccmaname" javaType="String" />
+		<result property="gcodename" column="gcodename" javaType="String" />
+		<result property="mcodename" column="mcodename" javaType="String" />
+		<result property="ccbalcad" column="ccbalcad" javaType="String" />
+		<result property="cccename" column="cccename" javaType="String" />
+		<result property="imageurl" column="imageurl" javaType="String" />
+		<result property="subimage1" column="subimage1" javaType="String" />
+		<result property="subimage2" column="subimage2" javaType="String" />
+		<result property="subimage3" column="subimage3" javaType="String" />
+		<result property="fk_userid" column="fk_userid" javaType="String" />
+		
+		
+	</resultMap>
+	
+	<!-- 문화재 검색 리스트 -->
+	<select id="culturePagingWishList" parameterType="HashMap" resultMap="cultureListMap">
+		
+		select rno, idx, ccbakdcd, ccbactcd, ccbaasno, ccmaname, gcodename, mcodename,ccbalcad, cccename, imageurl, subimage1, subimage2, subimage3, fk_userid
+		from 
+		(
+		select rownum as rno
+		     , V.idx, V.ccbakdcd, V.ccbactcd, V.ccbaasno, V.ccmaname, V.gcodename, V.mcodename, V.ccbalcad, V.cccename, V.imageurl, V.subimage1, V.subimage2, V.subimage3, V.fk_userid
+		from 
+		(
+		select A.idx, A.ccbakdcd, A.ccbactcd, A.ccbaasno, A.ccmaname, A.gcodename, A.mcodename, A.ccbalcad, A.cccename, A.ccbaposs, A.imageurl, A.content, A.subimage1, A.subimage2, A.subimage3, B.fk_userid
+		from final_culture A left join final_culture_wish B
+    	on A.idx = B.idx
+		where fk_userid = #{userid}
+		order by idx asc
+		) V
+		) T
+		where T.RNO <![CDATA[>=]]> #{startRno} and T.RNO <![CDATA[<=]]> #{endRno}
+		
+	</select>
+	
+	<!-- 즐겨찾기 한개 삭제 -->
+	<delete id="oneDeleteWish" parameterType="HashMap">
+		delete
+		from final_culture_wish
+		where idx=#{idx}
+	</delete>
+	
+	<!-- 즐겨찾기 여러개 삭제 -->
+	<delete id="ArrDeleteWish" parameterType="HashMap">
+		delete
+		from final_culture_wish
+		where idx in 
+			<foreach collection="delChkboxArr" index="i" open="(" separator="," close=")">
+				${delChkboxArr[i]}
+			</foreach> 
+	</delete>
+	
+		<!-- 검색어 자동완성 -->
+	<select id="getcultureSearchJSON" parameterType="String" resultType="String">
+	 	select ccmaname
+		 from final_culture
+		 where lower(ccmaname) LIKE '%' || lower(#{searchword})|| '%'
+	</select>
+	
+		<!-- 검색어 카운트  -->
+	<update id="getcultureCount" parameterType="String">
+		update final_culture set count = count+1 
+		where ccmaname like '%' || #{cultureSearchWord} || '%'
+	</update>
+	
+	<!-- 실시간 검색어순위 -->
+	<resultMap type="HashMap" id="rankShowJSONMap">
+		<result property="RNO" column="RNO" javaType="String" />
+		<result property="CCMANAME" column="CCMANAME" javaType="String" />
+		<result property="TOTALCOUNT" column="TOTALCOUNT" javaType="String" />
+		<result property="IDX" column="IDX" javaType="String" />
+	</resultMap>
+	<select id="rankShowJSON" resultMap="rankShowJSONMap">
+			select *
+				from 
+				(
+				select rownum as rno,idx, ccmaname, totalcount
+				from 
+				(
+				select idx, ccmaname,count as totalcount
+				from final_culture
+				order by count desc
+				)V
+				)T
+			where rno between 1 and 10
+	</select>
+	
+	<resultMap type="HashMap" id="wordCloudMap">
+		<result property="COUNT" column="totalcount" javaType="String" />
+		<result property="CCMANAME" column="ccmaname" javaType="String" />
+	</resultMap>
+	<select id="wordCloud" resultMap="wordCloudMap">
+		select *
+					from 
+					(
+					select rownum as rno,idx, ccmaname, totalcount
+					from 
+					(
+					select idx, ccmaname,count as totalcount
+					from final_culture
+					order by count desc
+					)V
+					)T
+		where rno between 1 and 15
+	</select>
+	
+</mapper>

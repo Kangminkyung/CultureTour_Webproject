@@ -1,0 +1,753 @@
+<!-- ==== #26. mapper 기본설정 ==== -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+<!-- ==== #27. 루트 엘리먼트 & 네임스페이스 설정(프로젝트 전체내에서 유일해야 한다.) -->
+<mapper namespace="band">
+	
+	<!-- 썸네일 포함 전 밴드리스트 불러오기 -->
+	<!-- <select id="getBand" resultType="com.spring.project.band.model.BandVO">
+		select bcode, bname, badmin, bthema, binfo, bmembercnt, bregdate
+		from final_band
+	</select> -->
+
+	<!-- 썸네일을 포함한 밴드 리스트 불러오기 -->
+ <!-- <resultMap type="HashMap" id="getListBandThumbnail">
+	<result property="BCODE" 			column="bcode" 			javaType="String" />
+		<result property="BNAME" 			column="bname" 			javaType="String" />
+		<result property="BADMIN" 			column="badmin" 		javaType="String" />
+		<result property="BTHEMA" 			column="bthema" 		javaType="String" />
+		<result property="BINFO" 			column="binfo" 			javaType="String" />
+		<result property="BMEMBERCNT" 		column="bmembercnt" 	javaType="String" />
+		<result property="THUMBNAILFILENAME" 	column="thumbnailfilename" 	javaType="String" />
+		<result property="TNAME" 			column="tname" 			javaType="String" />
+</resultMap>
+<select id="bandList" resultMap="getListBandThumbnail">
+	select C.bcode, C.bname, C.badmin, C.bthema, C.binfo, C.bmembercnt, C.thumbnailfilename, D.tname
+	from
+	(
+	select A.bcode, A.bname, A.badmin, A.bthema, A.binfo, A.bmembercnt, B.thumbnailfilename
+	from final_band A left join (select *
+	                             from final_bandimage
+	                             where bandimageseq in (select min(bandimageseq)
+	                                                     from final_bandimage
+	                                                     group by fk_bcode)) B
+	 on A.bcode = B.fk_bcode
+	) C join (select *
+	          from final_bandthema)D
+	on C.bthema = D.tcode
+	order by 1 desc
+</select>  -->
+	
+	<!-- 밴드테마 가져오기 -->
+	<resultMap type="HashMap" id="getBandThemaListMap">
+		<result property="TCODE" 	column="tcode" 	javaType="String" />
+ 		<result property="TNAME" 	column="tname" 	javaType="String" />
+	</resultMap>
+	<select id="getBandThema" resultMap="getBandThemaListMap">
+		select tcode, tname
+		from final_bandthema
+		order by tnum asc
+	</select>
+
+	<!-- 밴드일련번호 구해오기 -->
+	<select id="getBcodeseq" resultType="int">
+		select seq_final_band.nextval
+		from dual
+	</select>
+	
+	<!-- 밴드 등록하기 -->
+	<insert id="addBand" parameterType="HashMap">
+		insert into final_band(bcode, bname, badmin, binfo, bmembercnt, bregdate, bthema,status) 
+		values(#{bcode}, #{bname}, #{badmin}, #{binfo}, default, default, #{bthema}, 0)  
+	</insert>
+	
+	<!-- 벤드 등록시  밴드 이미지파일 등록하기 -->
+	<insert id="addBandImage" parameterType="HashMap">
+    	insert into final_bandimage(bandimageseq, fk_bcode, imagefilename, imageorgFilename, imagefileSize, thumbnailFileName) 
+		values(seq_final_bandimage.nextval, #{fk_bcode}, #{imagefilename}, #{imageorgFilename}, #{imagefileSize}, #{thumbnailFileName})  
+    </insert>
+	
+	<!-- 마이페이지- 가입한 밴드 썸네일 보여주기 -->
+	<resultMap type="HashMap" id="getListBandMap">
+		<result property="BCODE" 				column="bcode" 			javaType="String" />
+ 		<result property="BNAME" 				column="bname" 			javaType="String" />
+ 		<result property="BADMIN" 				column="badmin" 		javaType="String" />
+ 		<result property="BTHEMA" 				column="bthema" 		javaType="String" />
+ 		<result property="BINFO" 				column="binfo" 			javaType="String" />
+ 		<result property="BMEMBERCNT" 			column="bmembercnt" 		javaType="String" />
+ 		<result property="THUMBNAILFILENAME" 	column="thumbnailfilename" 	javaType="String" />
+ 		<result property="TNAME" 				column="tname" 	javaType="String" />
+	</resultMap>
+
+	<select id="getListMyband" parameterType="String" resultMap="getListBandMap">
+		<!-- select C.bcode, C.bname, C.badmin, C.bthema, C.binfo, C.bmembercnt, C.thumbnailfilename, D.tname, status
+		from
+		(
+		select A.bcode, A.bname, A.badmin, A.bthema, A.binfo, A.bmembercnt, B.thumbnailfilename, A.status
+		from final_band A left join (select *
+		                             from final_bandimage
+		                             where bandimageseq in (select min(bandimageseq)
+		                                                     from final_bandimage
+		                                                     group by fk_bcode)) B
+		 on A.bcode = B.fk_bcode
+		) C join (select *
+		          from final_bandthema)D
+		on C.bthema = D.tcode
+    	where status = 1 -->
+    	select  V.bcode, V.bname, V.badmin, V.bthema, V.binfo, V.bmembercnt, V.thumbnailfilename,V.tname, V.status
+			from
+			(
+			select C.bcode, C.bname, C.badmin, C.bthema, C.binfo, C.bmembercnt, C.thumbnailfilename, D.tname, status
+					from
+					(
+					select A.bcode, A.bname, A.badmin, A.bthema, A.binfo, A.bmembercnt, B.thumbnailfilename, A.status
+					from final_band A left join (select *
+					                             from final_bandimage
+					                             where bandimageseq in (select min(bandimageseq)
+					                                                     from final_bandimage
+					                                                     group by fk_bcode)) B
+					 on A.bcode = B.fk_bcode
+					) C join (select *
+					          from final_bandthema)D
+					on C.bthema = D.tcode
+			    where status = 1
+			    )V join final_band_Detail T
+			    on V.bcode = T.fk_bcode
+			    where T.userid = #{userid}
+			    or T.fk_bcode in (select bcode from final_band where badmin =#{userid})
+			    
+	</select>
+	
+	
+	<!-- 메인 메뉴 - 밴드 리스트에서 밴드 클릭하면 밴드 상세 정보 페이지로 넘어감 -->
+	<select id="getBandInfo" parameterType="String" resultType="com.spring.project.band.model.BandVO">
+		select bcode, bname, badmin, bthema, binfo, bmembercnt, to_char(bregdate, 'yyyy-mm-dd') as bregdate
+		from final_band
+		where bcode = #{bcode}
+	</select>
+	 
+	<!-- 페이징처리, 검색어없음 -->
+	<resultMap type="HashMap" id="getListBandThumbnailPaging">
+		<result property="BCODE" 			column="bcode" 			javaType="String" />
+		<result property="BNAME" 			column="bname" 			javaType="String" />
+		<result property="BADMIN" 			column="badmin" 		javaType="String" />
+		<result property="BTHEMA" 			column="bthema" 		javaType="String" />
+		<result property="BINFO" 			column="binfo" 			javaType="String" />
+		<result property="BMEMBERCNT" 		column="bmembercnt" 	javaType="String" />
+		<result property="THUMBNAILFILENAME" 	column="thumbnailfilename" 	javaType="String" />
+		<result property="TNUM" 			column="tnum" 			javaType="String" />
+		<result property="TCODE" 			column="tcode" 			javaType="String" />
+		<result property="TNAME" 			column="tname" 			javaType="String" />
+	</resultMap>
+	<select id="getbandList" parameterType="HashMap" resultMap="getListBandThumbnailPaging">
+		 select bcode, bname, badmin, bthema, binfo, bmembercnt, thumbnailfilename, tnum,tcode, tname
+		  from
+		  (
+		  select  rownum as RNO, bcode, bname, badmin, bthema, binfo, bmembercnt, thumbnailfilename, tnum,tcode, tname
+			from
+			(
+			  select C.bcode, C.bname, C.badmin, C.bthema, C.binfo, C.bmembercnt, C.thumbnailfilename, D.tnum, D.tcode, D.tname
+			  from
+				(
+			    select A.bcode, A.bname, A.badmin, A.bthema, A.binfo, A.bmembercnt, B.thumbnailfilename,A.status
+			    from final_band A left join 
+			      (select *
+			        from final_bandimage
+			        where bandimageseq in (select min(bandimageseq)
+				                         from final_bandimage
+				                        group by fk_bcode)) B
+				 on A.bcode = B.fk_bcode
+	       where A.status =1
+			  ) C join (select *
+				          from final_bandthema)D
+				on C.bthema = D.tcode
+		    order by bcode desc 
+			 )T
+		   order by 1 asc 
+		   )V
+		   where V.RNO >= #{startRno} and V.RNO <![CDATA[<=]]> #{endRno}
+	</select>
+	
+	<!-- 페이징처리, 검색어있음 -->
+	<resultMap type="HashMap" id="getListBandThumbnailPaging2">
+		<result property="BCODE" 			column="bcode" 			javaType="String" />
+		<result property="BNAME" 			column="bname" 			javaType="String" />
+		<result property="BADMIN" 			column="badmin" 		javaType="String" />
+		<result property="BTHEMA" 			column="bthema" 		javaType="String" />
+		<result property="BINFO" 			column="binfo" 			javaType="String" />
+		<result property="BMEMBERCNT" 		column="bmembercnt" 	javaType="String" />
+		<result property="THUMBNAILFILENAME" 	column="thumbnailfilename" 	javaType="String" />
+		<result property="TNUM" 			column="tnum" 			javaType="String" />
+		<result property="TCODE" 			column="tcode" 			javaType="String" />
+		<result property="TNAME" 			column="tname" 			javaType="String" />
+	</resultMap>
+	<select id="getbandList2" parameterType="HashMap" resultMap="getListBandThumbnailPaging2">
+	select bcode, bname, badmin, bthema, binfo, bmembercnt, thumbnailfilename, tnum,tcode, tname
+	  from
+	  (
+	  select  rownum as RNO, bcode, bname, badmin, bthema, binfo, bmembercnt, thumbnailfilename, tnum,tcode, tname
+		from
+		(
+		  select C.bcode, C.bname, C.badmin, C.bthema, C.binfo, C.bmembercnt, C.thumbnailfilename, D.tnum, D.tcode, D.tname
+		  from
+			(
+		    select A.bcode, A.bname, A.badmin, A.bthema, 
+	           case when length(A.binfo) > 20 then substr(A.binfo, 1, 18)||'..'
+			            else A.binfo end as binfo
+	           , A.bmembercnt, B.thumbnailfilename
+	    	from final_band A left join 
+		      (select *
+		        from final_bandimage
+		        where bandimageseq in (select min(bandimageseq)
+			                         from final_bandimage
+			                        group by fk_bcode)) B
+			 on A.bcode = B.fk_bcode
+		  ) C join (select *
+			          from final_bandthema)D
+			on C.bthema = D.tcode
+			where ${colname} like '%'|| #{search} ||'%'
+	    order by bcode desc 
+		 )T
+	   order by 1 asc 
+	   )V
+	   where V.RNO >= #{startRno} and V.RNO <![CDATA[<=]]> #{endRno}
+	</select>
+	
+	<!-- ===== 총 밴드수 구하기 ===== -->
+	<!-- 검색어가 없는 밴드수 -->
+	<select id="getTotalBandCount" resultType="Integer">
+		select count(*)
+		from final_band
+		where status = 1
+	</select>
+	
+	<!-- 검색어가 있는 밴드수 -->
+	<select id="getTotalBandCount2" parameterType="HashMap" resultType="Integer">
+		select count(*)
+		from final_band
+		where status = 1 and ${colname} like '%'|| #{search} ||'%'
+	</select>
+	
+	<!-- 밴드 info 페이지에 밴드 이미지 불러오기 -->
+	<select id="getBandImgList" parameterType="String" resultType="com.spring.project.band.model.BandImageVO">
+		select bandimageseq, fk_bcode, imagefilename, imageorgFilename, imagefileSize, thumbnailFileName
+		from final_bandimage
+		where fk_bcode = #{bcode}
+	</select>
+	
+	<resultMap type="HashMap" id="getViewBandImageListMap">
+		<result property="IMAGEFILENAME" 	 	column="imagefilename" 		javaType="String" />
+ 		<result property="IMAGEORGFILENAME"  	column="imageorgfilename" 	javaType="String" />
+ 		<result property="IMAGEFILESIZE"  		column="imagefilesize" 		javaType="String" />
+ 		<result property="THUMBNAILFILENAME"  	column="thumbnailfilename" 	javaType="String" />
+	</resultMap>    
+    <select id="getViewBandImage" resultMap="getViewBandImageListMap">
+		select imagefilename, imageorgfilename, imagefilesize, thumbnailfilename
+		from final_bandimage
+		where fk_bcode = #{bcode}
+		order by bandimageseq asc
+	</select>
+	
+	
+	<!-- ============================= 밴드 공지사항 ===================================== -->
+	<!-- ==== 검색어가 없는 총게시물의 건수 ==== -->
+	<select id="getBandNoticeTotalCount" parameterType="HashMap" resultType="Integer">
+		select count(*)
+		from final_bandnotice
+		where status = 1 and fk_bcode = #{bcode}
+		order by seq desc 
+	</select>
+	
+	<!-- ==== 검색어가 있는 총게시물의 건수 ==== -->
+	<select id="getBandNoticeTotalCount2" parameterType="HashMap" resultType="Integer">
+		select count(*)
+		from final_bandnotice
+		where status = 1 and ${colname} like '%'|| #{search} ||'%'
+		order by seq desc 
+	</select>
+	
+	<!-- ==== 글목록 보여주기 페이징처리(검색어가 없는 것) ==== -->					
+
+ 	<select id="bandNoticeList" parameterType="HashMap" resultType="com.spring.project.band.model.BandNoticeVO">
+		select  seq, bcode, userid, name, subject, content, pw, readCount,  regDate, status
+		from 
+		(
+		select rownum as RNO, V.seq, V.bcode, V.userid, V.name, V.subject, V.content, V.pw, V.readCount, V.regDate, V.status
+		from 
+		(
+		select A.seq, B.bcode, A.userid, A.name
+		     , case when length(A.subject) > 20 then substr(A.subject, 1, 18)||'..'
+		            else A.subject end as subject
+		     , A.content, A.pw, A.readCount
+		     , to_char(A.regDate, 'yyyy-mm-dd hh24:mi:ss') as regDate
+		     , A.status
+		from final_bandnotice A join final_band B
+		on A.fk_bcode = B.bcode
+		where B.bcode = #{bcode} and A.status = 1
+		) V
+		) T
+		where T.RNO >= #{startRno} and T.RNO <![CDATA[<=]]> #{endRno}
+	</select>
+	
+	<!-- ==== 글목록 보여주기 페이징처리(검색어가 있는 것) ==== -->		
+	<select id="bandNoticeList2" parameterType="HashMap" resultType="com.spring.project.band.model.BandNoticeVO">
+		select  seq, bcode, userid, name, subject, content, pw, readCount,  regDate, status
+		from 
+		(
+		select rownum as RNO, V.seq, V.bcode, V.userid, V.name, V.subject, V.content, V.pw, V.readCount, V.regDate, V.status
+		from 
+		(
+		select A.seq, B.bcode, A.userid, A.name
+		     , case when length(A.subject) > 20 then substr(A.subject, 1, 18)||'..'
+		            else A.subject end as subject
+		     , A.content, A.pw, A.readCount
+		     , to_char(A.regDate, 'yyyy-mm-dd hh24:mi:ss') as regDate
+		     , A.status
+		from final_bandnotice A join final_band B
+		on A.fk_bcode = B.bcode
+		where status = 1 and ${colname} like '%'|| #{search} ||'%'
+		and B.bcode = #{bcode} and A.status = 1
+		) V
+		) T
+		where T.RNO >= #{startRno} and T.RNO <![CDATA[<=]]> #{endRno}
+	</select>	
+	
+	<!-- ==== 글쓰기 ==== -->
+	<insert id="addBandNotice" parameterType="com.spring.project.band.model.BandNoticeVO">
+		insert into final_bandnotice(seq, fk_bcode, userid, name, subject, content, pw, readCount, regDate, status)
+		values(seq_final_bandnotice.nextval, #{fk_bcode}, #{userid}, #{name}, #{subject}, #{content}, #{pw}, default, default, default)
+	</insert>
+	
+	<!-- ==== #146. 글 1개를 보여주기 ==== -->
+	<select id="getBandNoticeView" parameterType="String" resultType="com.spring.project.band.model.BandNoticeVO">
+		select seq, fk_bcode, userid, name, subject, content, 
+		       readCount, to_char(regDate, 'yyyy-mm-dd hh24:mi:ss') as regDate
+		from final_bandnotice
+		where status = 1 and seq = #{seq}
+	</select>
+	
+	<!-- ==== 글 1개를 볼때 조회수 1증가 시키기 ==== -->
+	<update id="setAddReadCount" parameterType="String">
+		update final_bandnotice set readCount = readCount + 1
+		where status = 1 and seq = #{seq}
+	</update>	
+	
+	<!-- ==== 글수정 및 글삭제시 암호일치 여부 알아오기 ==== -->
+	<select id="checkPw" parameterType="HashMap" resultType="Integer">
+		select count(*)
+		from final_bandnotice
+		where seq = #{seq} and pw = #{pw}
+	</select>
+	
+	<!-- ==== 1개 글 수정하기 ==== -->
+	<update id="updateContent" parameterType="com.spring.project.band.model.BandNoticeVO">
+		update final_bandnotice set subject = #{subject}, content = #{content}
+		where seq = #{seq}
+	</update>
+	
+	<!-- ==== 1개 글 삭제하기 ==== -->
+	<update id="deleteContent" parameterType="HashMap">
+		update final_bandnotice set status = 0
+		where seq = #{seq}
+	</update>
+	
+	<!-- ============================= 밴드 공지사항 끝 ===================================== -->
+  
+	<!-- ///////////////////밴드수정하기 ////////////////////-->
+	<!-- 기존에 final_bandImage 테이블에 저장되어있던 수정 전 이미지 파일 갯수 구하기  -->
+	<select id="countBandImage" parameterType="String" resultType="int">
+		select count(*)
+		from final_bandimage
+		where fk_bcode =  #{bcode}
+	</select>
+	
+	<!-- 밴드 수정하기(이미지 첨부) 기본 final_bandImage 테이블에 저장된 이미지는 전부 삭제함 -->
+	<delete id="deleteBandImage" parameterType="String">
+		delete from final_bandimage
+		where fk_bcode = #{bcode}
+	</delete>
+	
+	<!-- 밴드수정하기 -->
+	<update id="editBand" parameterType="HashMap">
+		update final_band set bname = #{bname}, binfo = #{binfo}, bthema = #{bthema}
+		where bcode = #{bcode}
+	</update>
+	<!-- ////////////////////밴드 수정하기 끝///////////////////////////// -->
+	
+	<!-- 밴드삭제 -->
+	<update id="getBandDel" parameterType="String">
+		update final_band set status = 0
+		where bcode = #{bcode}
+	</update>
+	
+	
+	<insert id="getbandJoin" parameterType="HashMap">
+	    insert into final_band_detail(idx,fk_bcode,userid, registerday, status)
+	    values( seq_final_band_detail.nextval,#{bcode} ,#{userid} ,default  ,default )
+	</insert>
+	
+	<!-- 밴드장 구하기  -->
+	<select id="getbandjang" parameterType="HashMap" resultType="String">
+		select badmin
+		from final_band
+		where bcode = #{bcode}
+	</select>
+	
+	<!-- 밴드 이미가입했으면 userid 가져오기.  -->
+	<select id="getalreadybandjohn" parameterType="HashMap" resultType="String">
+		select userid
+		from final_band_detail
+		where fk_bcode= #{bcode} and userid = #{userid}
+	</select>
+	
+	
+	<!-- 밴드 인원수 구하기 -->
+	<select id="getBandTotalCount" parameterType="HashMap" resultType="Integer">
+		
+		
+		    select count(*) as cnt
+		    from final_band_detail A join final_member B
+		    on A.userid = B.userid
+		    where A.fk_bcode=22
+		    and ${searchType} like '%' || #{searchWord} ||'%'
+	
+	</select>
+	
+	
+	<!-- 밴드 멤버 출력하기(페이징처리) -->
+	<resultMap type="HashMap" id="getBandMemberPaging">
+	 	<result property="RNO"  		column="rno" 			javaType="String" />
+		<result property="USERID" 	 	column="userid" 		javaType="String" />
+ 		<result property="NAME"  		column="name" 			javaType="String" />
+ 		<result property="EMAIL"  		column="email" 			javaType="String" />
+		<result property="REGISTERDAY"  column="registerday" 	javaType="String" />
+ 		<result property="STATUS"  		column="status" 		javaType="String" />
+ 	</resultMap> 	
+ 	
+ 		<!-- 		map.put("bcode", bcode);				
+				map.put("startRno",String.valueOf(startRno));
+				map.put("endRno",String.valueOf(endRno));				
+				map.put("searchType",searchType);
+				map.put("searchWord",searchWord); -->
+				
+ 	<select id="getBandMember" parameterType="HashMap" resultMap="getBandMemberPaging">
+		select rno,userid,name,email,registerday,status
+		    from
+		    (
+		    select rownum as rno,userid,name,email,registerday,status
+		    from
+		    (
+		    select A.userid,B.name,B.email,A.registerday,A.status
+		    from final_band_detail A join final_member B
+		    on A.userid = B.userid
+		    where A.fk_bcode= #{bcode}
+		    )V 
+		    )T 
+		   	where ${searchType} like '%'|| #{searchWord} ||'%' and  T.RNO BETWEEN #{startRno} AND #{endRno}
+		    order by registerday desc	
+	</select> 
+	
+	<update id="getjoinallow" parameterType="HashMap">
+		update final_band_detail set status = 1
+		where userid = #{userid} and fk_bcode = #{bcode}
+	</update>
+	
+	<!-- 마이페이지- 생성한 밴드 썸네일 보여주기 -->
+<!-- 	<resultMap type="HashMap" id="getListBandMap">
+		<result property="BCODE" 				column="bcode" 			javaType="String" />
+ 		<result property="BNAME" 				column="bname" 			javaType="String" />
+ 		<result property="BADMIN" 				column="badmin" 		javaType="String" />
+ 		<result property="BTHEMA" 				column="bthema" 		javaType="String" />
+ 		<result property="BINFO" 				column="binfo" 			javaType="String" />
+ 		<result property="BMEMBERCNT" 			column="bmembercnt" 		javaType="String" />
+ 		<result property="THUMBNAILFILENAME" 	column="thumbnailfilename" 	javaType="String" />
+ 		<result property="TNAME" 				column="tname" 	javaType="String" />
+	</resultMap> -->
+	
+	
+	
+	<select id="getListMyCreateband" parameterType="String" resultMap="getListBandMap"> 		    
+		
+          select rno, bcode, bname, badmin,bthema, binfo, bmembercnt, thumbnailfilename, tname
+          from
+          (
+         	select  rownum as rno, bcode, bname, badmin,bthema, binfo, bmembercnt, thumbnailfilename, tname
+          from
+          (
+          	select  C.bcode, C.bname, C.badmin, C.bthema, C.binfo, C.bmembercnt, C.thumbnailfilename, D.tname, status
+					from
+					(
+					select A.bcode, A.bname, A.badmin, A.bthema, A.binfo, A.bmembercnt, B.thumbnailfilename, A.status
+					from final_band A left join (select *
+					                             from final_bandimage
+					                             where bandimageseq in (select min(bandimageseq)
+					                                                     from final_bandimage
+					                                                     group by fk_bcode)) B
+					 on A.bcode = B.fk_bcode
+					) C join (select *
+					          from final_bandthema)D
+					on C.bthema = D.tcode
+			    where status = 1 and badmin= #{userid}
+          order by bcode desc
+          )T
+          )
+           where rno between #{startRno} and #{endRno}  
+			    
+	</select>		
+	<select id="getListMyJoinband" parameterType="String" resultMap="getListBandMap"> 		    
+	          select rno , bcode, thumbnailfilename , bname , tname , status 
+				  from
+				(
+				SELECT rownum as rno , bcode, thumbnailfilename , bname , tname , status 
+				from 
+				(
+				SELECT   bcode, thumbnailfilename , bname ,  decode((bthema), 100, '커뮤니티' ,  200, '정보'  ,  300, '사진' , 400, '일기') as tname , D.status 
+				from final_band C right join          
+				(
+				select A.idx , A.fk_bcode, A.userid, A.registerday, A.status, B.bandimageseq, B.thumbnailfilename
+				from final_band_detail A left join
+				(select *
+				from final_bandimage
+				where bandimageseq in (select min(bandimageseq) from final_bandimage group by fk_bcode))B
+				 on A.fk_bcode = B.fk_bcode 
+				) D
+				on C.bcode = D.fk_bcode
+				where D.status = 1 and D.userid = #{userid}
+				order by bcode desc
+				)V
+				)T
+				where rno between #{startRno} and #{endRno} 
+			    
+	</select>	
+	<select id="myCreateBandCount" parameterType="String" resultType="Integer">		
+		select count(*) as cnt from final_band where badmin =#{userid} and status = 1	
+	</select>		
+	<select id="myJoinBandCount" parameterType="String" resultType="Integer">		
+		select count(*) as cnt from final_band_Detail where userid =#{userid} and status = 1
+	
+	</select>
+	
+	<update id="getmembercountup" parameterType="HashMap">
+		update final_band set bmembercnt = bmembercnt + 1
+		where bcode = ${bcode}
+	</update>
+	
+	<update id="deleteMyBand" parameterType="HashMap">
+		
+		<if test="type != null and type.equals('join')">
+			update final_band_Detail set status = 0 where fk_bcode = #{bcode} and userid = #{userid}
+		</if>
+		<if test="type != null and type.equals('create')">
+			update final_band set status = 0 where bcode = #{bcode}
+		</if>
+		 
+	</update>
+	
+	
+	<!-- 밴드플랜 시작-->
+	<!-- 플랜번호 구하기 -->
+	<select id="getPnumseq" resultType="int">
+		select seq_final_band.nextval
+		from dual
+	</select> 
+	
+	<insert id="getBandPlanAdd" parameterType="com.spring.project.band.model.BandPlanVO">
+		insert into final_bandplan(fk_bcode, pnum, fk_userid, pdate, ptitle, cultureSearch, pstime, petime, pmoney, pcontent, pwritedate, status, readCount)
+		values(#{fk_bcode},#{pnum}, #{fk_userid}, #{pdate}, #{ptitle}, #{cultureSearch}, #{pstime}, #{petime}, #{pmoney}, #{pcontent}, default, default, default)
+	</insert>
+	
+	<!-- 검색어가 있는 플랜 건수 -->
+	<select id="getTotalPlanCount2" parameterType="HashMap" resultType="Integer">
+	 	select count(*) as cnt
+		from final_bandplan
+		where fk_bcode = #{bcode} and ${colname} like '%'|| #{search} ||'%' and status = 1 
+	</select>
+	 
+	<!-- 검색어 없는 플랜 리스트 -->
+		<resultMap type="HashMap" id="getListBandPlanSearchPaging">
+			<result property="rno" 				column="rno" 			javaType="String" />
+			<result property="fk_bcode" 		column="fk_bcode" 		javaType="String" />
+			<result property="pnum" 			column="pnum" 			javaType="String" />
+			<result property="fk_userid" 		column="fk_userid" 		javaType="String" />
+			<result property="pdate" 			column="pdate" 			javaType="String" />
+			<result property="ptitle" 			column="ptitle" 		javaType="String" />
+			<result property="cultureSearch" 	column="cultureSearch" 	javaType="String" />
+			<result property="pstime" 			column="pstime" 		javaType="String" />
+			<result property="petime" 			column="petime" 		javaType="String" />
+			<result property="pmoney" 			column="pmoney" 		javaType="String" />
+			<result property="pcontent" 		column="pcontent" 		javaType="String" />
+			<result property="pwritedate" 		column="pwritedate" 	javaType="String" />
+			<result property="status" 			column="status" 		javaType="String" />
+			<result property="readCount" 		column="readCount" 		javaType="String" />
+			<result property="commentCount" 	column="commentCount" 		javaType="String" />
+	</resultMap>
+	<select id="getPlanList2" parameterType="HashMap" resultMap="getListBandPlanSearchPaging">
+	  select RNO,  fk_bcode, pnum, fk_userid, pdate, ptitle, cultureSearch, pstime, petime, pmoney, pcontent, pwritedate,status, readCount, commentCount
+    from 
+    (
+        select rownum as RNO,  fk_bcode, pnum, fk_userid, pdate, ptitle, cultureSearch, pstime, petime, pmoney, pcontent, pwritedate,status, readCount, commentCount
+	  from
+	  (
+		 select fk_bcode, pnum, fk_userid, pdate, ptitle, cultureSearch, pstime, petime, pmoney, pcontent, pwritedate,status, readCount, commentCount
+		from final_bandplan
+	    where fk_bcode =  #{bcode} and ${colname} like '%'|| #{search} ||'%' and  status = 1
+     	 order by pwritedate desc
+			)V
+      )T
+   	 	where RNO between  #{startRno} and #{endRno}
+	</select>
+	
+	<!-- 플랜보기 -->
+	<select id="getPlanView" parameterType="String" resultType="com.spring.project.band.model.BandPlanVO">
+		select fk_bcode, pnum, fk_userid, pdate, ptitle, cultureSearch, pstime, petime, pmoney, pcontent, pwritedate, status, readCount, commentCount
+	    from final_bandplan
+	    where pnum = #{pnum} and status = 1
+	</select>
+
+	<!-- 플랜수정 -->
+	<update id="getBandPlanEdit" parameterType="com.spring.project.band.model.BandPlanVO">
+		update final_bandplan set pdate = #{pdate}, ptitle = #{ptitle}, cultureSearch= #{cultureSearch}, pstime = #{pstime}, petime = #{petime}, pmoney = #{pmoney}, pcontent = #{pcontent} 
+		where pnum = #{pnum} 
+	</update>
+	
+	<!-- 플랜삭제 -->
+	<update id="getBandPlanDel" parameterType="String">
+		update final_bandplan set status = 0
+		where pnum = #{pnum} 
+	</update>
+	
+	<!-- ==== 댓글쓰기 ==== -->
+	<insert id="addPComment" parameterType="com.spring.project.band.model.PCommentVO">
+		insert into final_Pcomment(seq, userid, name, content, regDate, parentBcode, parentPnum, status)
+		values(pcommentSeq.nextval, #{userid}, #{name}, #{content}, default, #{parentBcode}, #{parentPnum}, default)
+	</insert>
+	
+	<!-- ==== 댓글쓰기 이후에 댓글의 갯수 1증가 시키기 ==== -->
+	<update id="updatePCommentCount" parameterType="String">
+		update final_bandplan set commentCount = commentCount + 1
+		where pnum = #{parentPnum}
+	</update>
+	
+	<!-- ==== 댓글내용 보여주기 ==== -->	
+	<select id="listPComment" parameterType="String" resultType="com.spring.project.band.model.PCommentVO">
+		select seq, userid, name, content, to_char(regDate, 'yyyy-mm-dd hh24:mi:ss') as regDate, parentBcode, parentPnum, status
+		from final_pcomment
+		where status = 1 and parentPnum = #{pnum}
+		order by seq desc
+	</select> 
+	
+	<!-- ==== 글 1개를 볼때 조회수 1증가 시키기(플랜) ==== -->
+	<update id="setAddReadCount2" parameterType="String">
+		update final_bandplan set readCount = readCount + 1
+		where status = 1 and pnum = #{pnum}
+	</update>	
+	
+	<!-- 사진게시판 목록 -->
+	<select id="photoList" parameterType="String" resultType="com.spring.project.band.model.PhotoVO"> 
+		select seq, fk_bcode, userid, fileName, orgFilename, fileSize, regDate, status
+		from final_photo where fk_bcode=#{bcode}
+		order by seq
+	</select>
+	
+	<insert id="addPhoto" parameterType="com.spring.project.band.model.PhotoVO">
+		insert into final_photo(seq, fk_bcode, userid, fileName, orgFilename, fileSize, regDate, status)
+		values(seq_final_photo.nextval, #{fk_bcode}, #{userid}, #{fileName}, #{orgFilename}, #{fileSize}, default, default)
+	</insert>
+	
+	
+	
+	<select id="getbandallowCount" resultType="Integer">			
+		select to_number(count(*)) as cnt
+		from final_band
+		where status = 0 
+	</select>
+	
+	
+		<resultMap type="HashMap" id="getbandallowMap">
+			<result property="RNO" 				column="rno" 			javaType="String" />
+			<result property="BCODE" 			column="bcode" 		javaType="String" />
+			<result property="BNAME" 			column="bname" 			javaType="String" />
+			<result property="BADMIN" 			column="badmin" 		javaType="String" />
+			<result property="BTHEMA" 			column="bthema" 			javaType="String" />
+			<result property="BINFO" 			column="binfo" 		javaType="String" />
+			<result property="BMEMBERCNT" 		column="bmembercnt" 	javaType="String" />
+			<result property="THUMBNAILFILENAME" 			column="thumbnailfilename" 		javaType="String" />
+			<result property="TNAME" 			column="tname" 		javaType="String" />
+			<result property="STATUS" 			column="status" 		javaType="String" />
+		</resultMap>
+	<select id="getbandallow" resultMap="getbandallowMap">
+		  select rno, bcode, bname, badmin,bthema, binfo, bmembercnt, thumbnailfilename, tname , status
+	          from
+	          (
+	         	select  rownum as rno, bcode, bname, badmin,bthema, binfo, bmembercnt, thumbnailfilename, tname ,status
+	          from
+	          (
+	          	select  C.bcode, C.bname, C.badmin, C.bthema, C.binfo, C.bmembercnt, C.thumbnailfilename, D.tname, status
+						from
+						(
+						select A.bcode, A.bname, A.badmin, A.bthema, A.binfo, A.bmembercnt, B.thumbnailfilename, A.status
+						from final_band A left join (select *
+						                             from final_bandimage
+						                             where bandimageseq in (select min(bandimageseq)
+						                                                     from final_bandimage
+						                                                     group by fk_bcode)) B
+						 on A.bcode = B.fk_bcode
+						) C join (select *
+						          from final_bandthema)D
+						on C.bthema = D.tcode
+				    where status = 0
+	          order by bcode desc
+	          )T
+	          )
+	           where rno between #{startRno} and #{endRno}
+	</select>
+	
+	<update id="getoneallowband" parameterType="String">
+		update final_band set status = 1
+		where bcode = #{bcode}
+	</update>
+	
+	<update id="getcheckboxbandallow" parameterType="HashMap">
+		update final_band set status = 1
+		where bcode in
+		<foreach collection="pnumArr" index="i" open="(" separator="," close=")">
+				${pnumArr[i] }
+		</foreach>
+		
+	</update>
+	
+	<!-- 밴드 플랜 댓글 신고 -->
+	<insert id="policePcomment" parameterType="HashMap">
+		insert into final_policepcomment(pnum, fk_seq, police_userid)
+		values(police_pcommentSeq.nextval, #{seq}, #{police_userid})
+	</insert>
+	
+	<!-- 밴드플랜 중복신고 막기  -->
+	<select id="policePuserid" parameterType="HashMap" resultType="int">
+		select count(*)
+		from final_policepcomment
+		where fk_seq = #{seq} and police_userid = #{police_userid}
+	</select>
+	
+	<!-- 자유게시판 댓글 신고 -->
+	<insert id="policeComment" parameterType="HashMap">
+		insert into final_policecomment(pnum, fk_seq, police_userid)
+		values(police_commentSeq.nextval, #{seq}, #{police_userid})
+	</insert>
+	
+	<!-- 자유게시판 중복신고 막기 -->
+	<select id="policeUserid" parameterType="HashMap" resultType="int">
+		select count(*)
+		from final_policecomment
+		where fk_seq = #{seq} and police_userid = #{police_userid}
+	</select>
+	
+	 <!-- 밴드 플랜 페이지에서 문화재 번호가져오기  -->
+   <select id="getCultureIdx" parameterType="String" resultType="int">
+      select idx
+      from final_culture
+      where ccmaname = #{cultureSearch}
+   </select>
+	
+	
+</mapper>

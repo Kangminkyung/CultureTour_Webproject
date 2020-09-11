@@ -1,0 +1,308 @@
+<!-- ==== mapper 기본설정 ==== -->
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd"> 
+
+<!-- ==== 루트 엘리먼트 & 네임스페이스 설정(프로젝트 전체내에서 유일해야 한다.) -->
+<mapper namespace="board">
+	
+	<!-- ==== 검색어가 없는 총게시물의 건수 ==== -->
+	<select id="getNoticeTotalCount" resultType="Integer">
+		select count(*)
+		from final_notice
+		where status = 1
+		order by seq desc 
+	</select>
+	
+	<!-- ==== 검색어가 있는 총게시물의 건수 ==== -->
+	<select id="getNoticeTotalCount2" parameterType="HashMap" resultType="Integer">
+		select count(*)
+		from final_notice
+		where status = 1 and ${colname} like '%'|| #{search} ||'%'
+	</select>
+	
+	<!-- ==== 글목록 보여주기 페이징처리(검색어가 없는 것) ==== -->					
+ 	<select id="noticeList" parameterType="HashMap" resultType="com.spring.project.board.model.NoticeVO">
+		select  seq, userid, subject, content, writeday, status
+		from 
+		(
+		select rownum as RNO, V.seq, V.userid, V.subject, V.content, V.writeday, V.status
+		from 
+		(
+		select seq, userid 
+		     , case when length(subject) > 20 then substr(subject, 1, 18)||'..'
+		            else subject end as subject
+		     , content , to_char(writeday, 'yyyy-mm-dd hh24:mi:ss') as writeday
+		     , status
+		from final_notice
+		where status = 1
+		) V
+		) T
+		where T.RNO >= #{startRno} and T.RNO <![CDATA[<=]]> #{endRno}
+	</select>
+	
+	<!-- ==== 글목록 보여주기 페이징처리(검색어가 있는 것) ==== -->		
+	<select id="noticeList2" parameterType="HashMap" resultType="com.spring.project.board.model.NoticeVO">
+		select  seq, userid, subject, content, writeday, status
+		from 
+		(
+		select rownum as RNO, V.seq, V.userid, V.subject, V.content, V.writeday, V.status
+		from 
+		(
+		select seq, userid 
+		     , case when length(subject) > 20 then substr(subject, 1, 18)||'..'
+		            else subject end as subject
+		     , content , to_char(writeday, 'yyyy-mm-dd hh24:mi:ss') as writeday
+		     , status
+		from final_notice
+		where status = 1 and ${colname} like '%'|| #{search} ||'%'
+		and status = 1
+		) V
+		) T
+		where T.RNO >= #{startRno} and T.RNO <![CDATA[<=]]> #{endRno}
+	</select>	
+	
+	<insert id="addNotice" parameterType="com.spring.project.board.model.NoticeVO">
+		insert into final_notice(seq, userid, subject, content, writeday, status)
+		values(noticeSeq.nextval, #{userid}, #{subject}, #{content}, default, default)			
+	</insert>
+	
+	<!-- ==== 공지 글 삭제하기 ==== -->
+	<update id="deleteNotice" parameterType="HashMap">
+		update final_notice set status = 0
+		where seq = #{seq}
+	</update>
+	
+	<!-- ==== 검색어가 없는 총게시물의 건수 ==== -->
+	<select id="getTotalCount" resultType="Integer">
+		select count(*)
+		from final_board
+		where status = 1
+		order by seq desc 
+	</select>
+	
+	<!-- ==== 검색어가 있는 총게시물의 건수 ==== -->
+	<select id="getTotalCount2" parameterType="HashMap" resultType="Integer">
+		select count(*)
+		from final_board
+		where status = 1 and ${colname} like '%'|| #{search} ||'%'
+		order by seq desc 
+	</select>
+	
+	<!-- ==== 파일첨부가 있는 답변형 게시판 글목록 보여주기 페이징처리(검색어가 없는 것) ==== -->					
+ 	<select id="qnaList" parameterType="HashMap" resultType="com.spring.project.board.model.BoardVO">
+		select  seq, name, subject, readCount, regDate, commentCount, 
+				groupno, fk_seq, depthno, fileName, orgFilename, fileSize
+		from 
+		(
+		select rownum as RNO, V.seq, V.name, V.subject, V.content, V.readCount, V.regDate, 
+			   V.commentCount, V.groupno, V.fk_seq, V.depthno, V.fileName, V.orgFilename, V.fileSize
+		from 
+		(
+		select seq, name 
+		     , case when length(subject) > 20 then substr(subject, 1, 18)||'..'
+		            else subject end as subject
+		     , content , readCount
+		     , to_char(regDate, 'yyyy-mm-dd hh24:mi:ss') as regDate
+		     , commentCount
+         	 , groupno, fk_seq, depthno
+         	 , fileName, orgFilename, fileSize
+		from final_board
+		where status = 1
+    	start with fk_seq = 0
+    	connect by prior seq = fk_seq
+		order siblings by groupno desc, seq asc
+		) V
+		) T
+		where T.RNO >= #{startRno} and T.RNO <![CDATA[<=]]> #{endRno}
+	</select>
+	
+	<!-- ==== 파일첨부가 있는 글목록 보여주기 페이징처리(검색어가 있는 것) ==== -->		
+	<select id="qnaList2" parameterType="HashMap" resultType="com.spring.project.board.model.BoardVO">
+		select  seq, name, subject, readCount, regDate, commentCount, 
+				groupno, fk_seq, depthno, fileName, orgFilename, fileSize
+		from 
+		(
+		select rownum as RNO, V.seq, V.name, V.subject, V.content, V.readCount, V.regDate, 
+			   V.commentCount, V.groupno, V.fk_seq, V.depthno, V.fileName, V.orgFilename, V.fileSize
+		from 
+		(
+		select seq, name 
+		     , case when length(subject) > 20 then substr(subject, 1, 18)||'..'
+		            else subject end as subject
+		     , content , readCount
+		     , to_char(regDate, 'yyyy-mm-dd hh24:mi:ss') as regDate
+		     , commentCount
+         	 , groupno, fk_seq, depthno
+         	 , fileName, orgFilename, fileSize
+		from final_board
+		where status = 1 and ${colname} like '%'|| #{search} ||'%'
+    	start with fk_seq = 0
+    	connect by prior seq = fk_seq
+		order siblings by groupno desc, seq asc
+		) V
+		) T
+	where T.RNO >= #{startRno} and T.RNO <![CDATA[<=]]> #{endRno}
+	</select>	
+	
+	<!-- ==== tblBoard테이블의 groupno컬럼의 max값 알아오기 ==== -->
+	<select id="getGroupMaxno" resultType="Integer">
+		select nvl(max(groupno),0)
+		from final_board
+	</select>
+	
+	<!-- ==== 파일첨부가 없는 글쓰기(답변형 게시판) ==== -->
+	<insert id="addqna" parameterType="com.spring.project.board.model.BoardVO">
+		<if test='fk_seq.equals("")'> <!-- 원글쓰기 이라면!!  -->
+		insert into final_board(seq, userid, name, subject, content, pw, readCount, regDate, status, groupno, fk_seq,depthno)
+		values(boardSeq.nextval, #{userid}, #{name}, #{subject}, #{content}, #{pw}, default, default, default,#{groupno},default,default)
+		</if>	
+		<if test='!fk_seq.equals("")'> <!-- 답변글쓰기 이라면!!  -->
+		insert into final_board(seq, userid, name, subject, content, pw, readCount, regDate, status, groupno, fk_seq,depthno)
+		values(boardSeq.nextval, #{userid}, #{name}, #{subject}, #{content}, #{pw}, default, default, default,#{groupno},#{fk_seq},#{depthno}+1)
+		</if>		
+	</insert>
+	
+	<!-- ==== 파일첨부가 있는 글쓰기(답변형 게시판) -->
+	<insert id="addqna_withFile" parameterType="com.spring.project.board.model.BoardVO">
+		<if test='fk_seq.equals("")'> <!-- 원글쓰기 이라면!!  -->
+		insert into final_board(seq, userid, name, subject, content, pw, readCount, regDate, status, groupno, fk_seq, depthno, fileName, orgFilename, fileSize)
+		values(boardSeq.nextval, #{userid}, #{name}, #{subject}, #{content}, #{pw}, default, default, default, #{groupno}, default, default, #{fileName}, #{orgFilename}, #{fileSize})
+		</if>	
+		<if test='!fk_seq.equals("")'> <!-- 답변글쓰기 이라면!!  -->
+		insert into final_board(seq, userid, name, subject, content, pw, readCount, regDate, status, groupno, fk_seq, depthno, fileName, orgFilename, fileSize)
+		values(boardSeq.nextval, #{userid}, #{name}, #{subject}, #{content}, #{pw}, default, default, default, #{groupno}, #{fk_seq}, #{depthno}+1, #{fileName}, #{orgFilename}, #{fileSize})
+		</if>	
+	</insert>
+	
+	<!-- ==== #146. 글 1개를 보여주기 ==== -->
+	<select id="getQnaView" parameterType="String" resultType="com.spring.project.board.model.BoardVO">
+		select seq, userid, name, subject, content, 
+		       readCount, to_char(regDate, 'yyyy-mm-dd hh24:mi:ss') as regDate,
+		       groupno, fk_seq, depthno, fileName, orgFilename, fileSize
+		from final_board
+		where status = 1 and seq = #{seq}
+	</select>
+	
+	<!-- ==== 글 1개를 볼때 조회수 1증가 시키기 ==== -->
+	<update id="setAddReadCount" parameterType="String">
+		update final_board set readCount = readCount + 1
+		where status = 1 and seq = #{seq}
+	</update>	
+	
+	<!-- ==== 댓글쓰기 ==== -->
+	<insert id="addComment" parameterType="com.spring.project.board.model.CommentVO">
+		insert into final_comment(seq, userid, name, content, regDate, parentSeq, status)
+		values(commentSeq.nextval, #{userid}, #{name}, #{content}, default, #{parentSeq}, default)
+	</insert>
+	
+	<!-- ==== 댓글쓰기 이후에 댓글의 갯수 1증가 시키기 ==== -->
+	<update id="updateCommentCount" parameterType="String">
+		update final_board set commentCount = commentCount + 1
+		where seq = #{parentSeq}
+	</update>
+	
+	<!-- ==== 댓글내용 보여주기 ==== -->	
+	<select id="listComment" parameterType="String" resultType="com.spring.project.board.model.CommentVO">
+		select seq, userid, name, content, to_char(regDate, 'yyyy-mm-dd hh24:mi:ss') as regDate, parentSeq, status
+		from final_comment
+		where status = 1 and parentSeq = #{parentSeq}
+		order by seq desc
+	</select> 
+	
+	<!-- ==== 글수정 및 글삭제시 암호일치 여부 알아오기 ==== -->
+	<select id="checkPw" parameterType="HashMap" resultType="Integer">
+		select count(*)
+		from final_board
+		where seq = #{seq} and pw = #{pw}
+	</select>
+	
+	<!-- ==== 1개 글 수정하기 ==== -->
+	<update id="updateContent" parameterType="com.spring.project.board.model.BoardVO">
+		update final_board set subject = #{subject}, content = #{content}
+		where seq = #{seq}
+	</update>
+	
+	<!-- ==== 원게시글에 딸린 댓글이 있는지 없는지를 확인하기 ==== -->
+	<select id="isExistsComment" parameterType="HashMap" resultType="Integer">
+		select count(*)
+		from final_comment
+		where parentSeq = #{seq}
+	</select>
+	
+	<!-- ==== 1개 글 삭제하기 ==== -->
+	<update id="deleteContent" parameterType="HashMap">
+		update final_board set status = 0
+		where seq = #{seq}
+	</update>
+	
+	<!-- ==== 원게시글에 딸린 댓글 삭제하기 ==== -->
+	<update id="deleteComment" parameterType="HashMap">
+		update final_comment set status = 0
+		where parentSeq = #{seq}
+	</update>
+
+	
+
+	<!-- ==== 댓글 신고 ==== -->
+	<select id="getTotalPoliceCommentCount" resultType="Integer">	    
+	    select count(*) as cnt
+	    from final_comment A join final_policecomment B
+	    on A.seq = B.fk_seq
+	</select>
+	
+	<select id="getTotalPolicePCommentCount" resultType="Integer">	    
+	    select count(*) as cnt
+	    from final_pcomment A join final_policepcomment B
+	    on A.seq = B.fk_seq
+	</select>
+	
+	<!-- ==== 댓글 신고 ==== -->
+
+	<resultMap type="HashMap" id="policeList">
+		<result property="userid" 	column="userid" 	javaType="String" />
+		<result property="name" 	column="name" 	javaType="String" />
+		<result property="content" 	column="content" 	javaType="String" />
+		<result property="regdate" 	column="regdate" 	javaType="String" />
+		<result property="police_userid" 	column="police_userid" 	javaType="String" />		
+	</resultMap>
+
+	
+	<select id="getListPoliceComment" parameterType="HashMap" resultMap="policeList" >
+	select userid,name,content,regdate,police_userid
+    from
+    (    
+    select rownum as rno,userid,name,content,regdate,police_userid
+    from
+    (    
+    select A.userid,A.name,A.content,A.regdate, B.police_userid
+    from final_comment A join final_policecomment B
+    on A.seq = B.fk_seq
+    order by A.regdate desc
+    )V     
+    )T    
+    where rno between #{startRno} and #{endRno}
+
+	</select>	
+
+	
+	<select id="getListPolicePComment" parameterType="HashMap" resultMap="policeList" >
+	select userid,name,content,regdate,police_userid
+    from
+    (    
+    select rownum as rno,userid,name,content,regdate,police_userid
+    from
+    (    
+    select A.userid,A.name,A.content,A.regdate, B.police_userid
+    from final_pcomment A join final_policepcomment B
+    on A.seq = B.fk_seq
+    order by A.regdate desc
+    )V     
+    )T    
+   where rno between #{startRno} and #{endRno}
+	</select>
+	
+	
+	
+	
+	
+
+</mapper>
